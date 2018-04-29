@@ -16,11 +16,31 @@ function CheckLinks {
         !($_.Matches.Groups[2].Value.StartsWith("http"))
     }
     $links | % { 
-        $link = $_.Matches.Groups[2].Value
-        $fullLink = Join-Path $page.DirectoryName $link
-        if (!(Test-Path $fullLink)) { Write-Warning "Invalid link in $($page.FullName) ($($_.LineNumber)): '$($link)'" }
+		$global:checked++
+        $link = $_.Matches.Groups[2].Value.Split(" ")[0] # separate file part from optional tooltip
+        $fullLink = Join-Path $page.DirectoryName $link.Split(" ")[0] # separate file part from optional tooltip
+        
+        if ($page.BaseName -eq "index") {
+            $fullLink = Join-Path $page.Directory.parent.FullName $link
+        }
+
+        # handle paths
+        if ($link.StartsWith('/')) {
+            Write-Warning "Absolute path not (yet) supported! $($page.FullName) ($($_.LineNumber)): '$($link)'" 
+            return
+        } 
+        
+        # check if target exists
+        if (!(Test-Path $fullLink)) { 
+			$global:errors++
+            Write-Warning "$($page.FullName) ($($_.LineNumber)): link target not found: '$($link)'" 
+            #$fullLink
+		}
     }
 }
+
+$global:checked = 0
+$global:errors = 0
 
 # remove old destination
 if (Test-Path $dest) { Remove-Item $dest -Recurse }
