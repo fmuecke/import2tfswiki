@@ -8,7 +8,6 @@ function CreateOrUpdateOrderFile {
     if (!((Get-Content $orderFile) -cmatch $entry)) { Add-Content $orderFile $entry }
 }
 
-
 # create entry pages for empty sub directories
 function CreateEntryPages {
     Get-ChildItem $PSScriptRoot -Directory -Recurse | % {
@@ -23,4 +22,3 @@ $pages = Get-ChildItem -Filter *.md -Recurse -Path $PSScriptRoot | sort
 
 # update .order files  
 $pages | % { CreateOrUpdateOrderFile $_.DirectoryName $_.BaseName }
-

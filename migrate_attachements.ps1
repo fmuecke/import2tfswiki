@@ -27,17 +27,20 @@ function FixAttachementLink {
     $item = gi $file
     $folder = $item.Directory
 
-    $mdFiles = gci -Path $folder -Include *.md -Recurse
+    $mdFiles = gci -Path $folder -Include *.md -Recurse | ? { return !($_ -is [System.IO.DirectoryInfo]) }
 
     $mdFiles | % {
-        $content = Get-Content $_ -Encoding UTF8
-        
-        $pattern = "]($($item.Name)"
-        $newValue = "]($(GetAttachmentName $file)"
+        if ($_.Length -gt 0) { # only if filesize > 0
+            $content = (Get-Content $_ -Encoding UTF8).Replace("](images/", "](")
+            
+            $pattern = "]($($item.Name)"
+            $newValue = "]($(GetAttachmentName $file)"
 
-        if ($content -like "*$pattern*") {
-            #Write-Host "$pattern --> $newValue"
-            Set-Content $_ ($content.Replace($pattern, $newValue)) -Encoding UTF8
+            if ($content -like "*$pattern*") {
+                #Write-Host "$pattern --> $newValue"
+                $newContent = ($content.Replace($pattern, $newValue))
+                [System.IO.File]::WriteAllLines($_, $newContent) # writes UTF8 without BOM
+            }
         }
     }
     
